@@ -28,26 +28,55 @@ export function VideoScrollSequence() {
   }, []);
 
   useEffect(() => {
-    const loadedImages: HTMLImageElement[] = [];
-    let count = 0;
+    const loadedImages: HTMLImageElement[] = new Array(totalFrames);
     
-    for (let i = 1; i <= totalFrames; i++) {
-      const img = new Image();
-      const frameNumber = i.toString().padStart(4, '0');
-      img.src = `/assets/video-frames/frame_${frameNumber}.webp`;
-      
-      img.onload = () => {
-        count++;
-        if (i === 1 && currentFrame.current === 0) {
-          drawFrame(0, loadedImages);
-        } else if (count === 1 && currentFrame.current === 0) {
-          drawFrame(i - 1, loadedImages);
+    const loadFrame = (index: number): Promise<void> => {
+      return new Promise((resolve) => {
+        if (loadedImages[index]) {
+          resolve();
+          return;
         }
-      };
-      loadedImages.push(img);
-    }
-    
-    setImages(loadedImages);
+        const img = new Image();
+        const frameNumber = (index + 1).toString().padStart(4, '0');
+        img.src = `/assets/video-frames/frame_${frameNumber}.webp`;
+        
+        img.onload = () => {
+          loadedImages[index] = img;
+          if (index === 0 && currentFrame.current === 0) {
+            drawFrame(0, loadedImages);
+          }
+          resolve();
+        };
+        img.onerror = () => resolve();
+      });
+    };
+
+    const loadImagesProgressively = async () => {
+      // 1. Eagerly load the first 5 frames for instant initial render
+      const initialBatch = [];
+      for (let i = 0; i < Math.min(5, totalFrames); i++) {
+        initialBatch.push(loadFrame(i));
+      }
+      await Promise.all(initialBatch);
+      setImages([...loadedImages]); // Unlock scroll rendering
+
+      // 2. Lazy load the remaining frames in small background batches
+      // to prevent the browser from clogging the network with 120 parallel requests
+      setTimeout(async () => {
+        const batchSize = 10;
+        for (let i = 5; i < totalFrames; i += batchSize) {
+          const batch = [];
+          for (let j = 0; j < batchSize && i + j < totalFrames; j++) {
+            batch.push(loadFrame(i + j));
+          }
+          await Promise.all(batch);
+          // Periodically update the state so the scroll event has access to new frames
+          setImages([...loadedImages]); 
+        }
+      }, 200);
+    };
+
+    loadImagesProgressively();
   }, [drawFrame]);
 
   useEffect(() => {
