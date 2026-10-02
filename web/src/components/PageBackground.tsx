@@ -13,7 +13,7 @@ export function PageBackground() {
     return (
       <div 
         className="fixed inset-0 -z-40 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 opacity-60"
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1596401057633-ceb12b5b1cf7?q=80&w=2070&auto=format&fit=crop')" }}
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=2094&auto=format&fit=crop')" }}
       >
         <div className="absolute inset-0 bg-[#1a1714]/70" />
       </div>
