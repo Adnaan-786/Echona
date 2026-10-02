@@ -4,10 +4,16 @@ cd "$(dirname "$0")"
 
 echo "🏴‍☠️ Hoisting the colors! Starting Echona 2K26..."
 
-# 0. Ensure Database is Running (Fix for "Can't reach database server" on Mac restarts)
-echo "-> Checking PostgreSQL Database..."
-brew services start postgresql@15 2>/dev/null
-sleep 2
+# 0. Install dependencies if needed
+if [ ! -d "web/node_modules" ]; then
+  echo "-> Installing Web dependencies..."
+  cd web && npm install && cd ..
+fi
+
+if [ ! -d "realtime-service/node_modules" ]; then
+  echo "-> Installing Realtime Service dependencies..."
+  cd realtime-service && npm install && cd ..
+fi
 
 # 1. Start Realtime Service
 echo "-> Booting WebSocket Server (Port 3001)..."

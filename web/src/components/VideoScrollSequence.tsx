@@ -6,7 +6,7 @@ export function VideoScrollSequence() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [images, setImages] = useState<HTMLImageElement[]>([]);
   
-  const totalFrames = 240;
+  const totalFrames = 120;
   
   const targetFrame = useRef(0);
   const currentFrame = useRef(0);
@@ -34,7 +34,7 @@ export function VideoScrollSequence() {
     for (let i = 1; i <= totalFrames; i++) {
       const img = new Image();
       const frameNumber = i.toString().padStart(4, '0');
-      img.src = `/assets/video-frames/frame_${frameNumber}.jpg`;
+      img.src = `/assets/video-frames/frame_${frameNumber}.webp`;
       
       img.onload = () => {
         count++;
@@ -115,7 +115,7 @@ export function VideoScrollSequence() {
           className="absolute inset-0 w-full h-full opacity-100"
           style={{ 
             objectFit: 'cover',
-            backgroundImage: "url('/assets/video-frames/frame_0001.jpg')",
+            backgroundImage: "url('/assets/video-frames/frame_0001.webp')",
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
