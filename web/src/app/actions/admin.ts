@@ -180,6 +180,92 @@ export async function createQuestionWithStarterCodes(roundId: string, formData: 
   redirect(`/admin/rounds/${roundId}`)
 }
 
+export async function updateQuestionWithStarterCodes(questionId: string, formData: FormData) {
+  await checkAdmin()
+
+  const title = (formData.get("title") as string)?.trim()
+  const description = (formData.get("description") as string)?.trim()
+  const points = parseInt(formData.get("points") as string, 10)
+  const jsStarter = (formData.get("jsStarter") as string) || ""
+  const pyStarter = (formData.get("pyStarter") as string) || ""
+  const cppStarter = (formData.get("cppStarter") as string) || ""
+
+  const testInput1 = (formData.get("testInput1") as string) || ""
+  const testExpected1 = (formData.get("testExpected1") as string) || ""
+  const testInput2 = (formData.get("testInput2") as string) || ""
+  const testExpected2 = (formData.get("testExpected2") as string) || ""
+  const testInput3 = (formData.get("testInput3") as string) || ""
+  const testExpected3 = (formData.get("testExpected3") as string) || ""
+
+  if (!title || !description || isNaN(points)) {
+    throw new Error("Title, description, and points are required")
+  }
+
+  const question = await prisma.question.update({
+    where: { id: questionId },
+    data: {
+      title,
+      description,
+      points,
+    },
+  })
+
+  // Clear existing starter codes and test cases
+  await prisma.starterCode.deleteMany({ where: { questionId } })
+  await prisma.testCase.deleteMany({ where: { questionId } })
+
+  // Re-create Starter codes
+  if (jsStarter.trim()) {
+    await prisma.starterCode.create({
+      data: { questionId: question.id, language: "javascript", code: jsStarter }
+    })
+  }
+  if (pyStarter.trim()) {
+    await prisma.starterCode.create({
+      data: { questionId: question.id, language: "python", code: pyStarter }
+    })
+  }
+  if (cppStarter.trim()) {
+    await prisma.starterCode.create({
+      data: { questionId: question.id, language: "cpp", code: cppStarter }
+    })
+  }
+
+  // Re-create Test cases
+  if (testExpected1.trim()) {
+    await prisma.testCase.create({
+      data: {
+        questionId: question.id,
+        input: testInput1,
+        expected: testExpected1,
+        isHidden: false
+      }
+    })
+  }
+  if (testExpected2.trim()) {
+    await prisma.testCase.create({
+      data: {
+        questionId: question.id,
+        input: testInput2,
+        expected: testExpected2,
+        isHidden: true
+      }
+    })
+  }
+  if (testExpected3.trim()) {
+    await prisma.testCase.create({
+      data: {
+        questionId: question.id,
+        input: testInput3,
+        expected: testExpected3,
+        isHidden: true
+      }
+    })
+  }
+
+  redirect(`/admin/rounds/${question.roundId}`)
+}
+
 export async function uploadStarterCode(questionId: string, language: string, code: string) {
   await checkAdmin()
   return await prisma.starterCode.upsert({

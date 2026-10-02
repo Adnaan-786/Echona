@@ -56,7 +56,17 @@ export default async function AdminRoundDetailPage({
               key={q.id}
               className="rounded-lg border border-[#8b7355] bg-[#2a2a2a] p-4"
             >
-              <h3 className="text-lg font-bold text-[#d4af37]">{q.title}</h3>
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-bold text-[#d4af37]">{q.title}</h3>
+                {round.competition.status === "DRAFT" && (
+                  <Link 
+                    href={`/admin/rounds/${round.id}/questions/${q.id}/edit`}
+                    className="text-xs text-[#d4af37] hover:text-white border border-[#d4af37]/30 hover:bg-[#d4af37]/20 px-3 py-1 rounded transition-colors"
+                  >
+                    Edit
+                  </Link>
+                )}
+              </div>
               <p className="text-sm text-[#8b7355] line-clamp-2 mt-1">{q.description}</p>
               <div className="mt-4 flex gap-4 text-xs font-semibold text-[#d4cbb3]">
                 <span className="rounded bg-[#1a1a1a] px-2 py-1">{q.points} Points</span>
