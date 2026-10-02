@@ -18,9 +18,9 @@ export function Navigation({ session }: { session: any }) {
       className="fixed top-0 w-full z-[100] px-12 py-8 grid grid-cols-3 items-center pointer-events-none mix-blend-difference"
     >
       {/* LEFT: Home Button */}
-      <div className="flex items-center justify-start pointer-events-auto">
+      <div className="flex items-center justify-start">
         {pathname !== "/" && (
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center gap-2 group pointer-events-auto">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f4ede0" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
               <polyline strokeLinecap="round" strokeLinejoin="round" points="9 22 9 12 15 12 15 22" />
@@ -33,9 +33,9 @@ export function Navigation({ session }: { session: any }) {
       </div>
 
       {/* CENTER: Logo & Title (Only visible on the home/landing page) */}
-      <div className="flex items-center justify-center pointer-events-auto">
+      <div className="flex items-center justify-center">
         {pathname === "/" && (
-          <Link href="/" className="flex flex-col items-center justify-center group">
+          <Link href="/" className="flex flex-col items-center justify-center group pointer-events-auto">
 
             <div className="flex flex-col items-center text-center mt-1">
               <span className="font-cinzel font-bold tracking-[0.2em] text-[#f4ede0] text-lg leading-none">
@@ -50,10 +50,10 @@ export function Navigation({ session }: { session: any }) {
       </div>
 
       {/* RIGHT: Auth & Links */}
-      <div className="flex items-center justify-end pointer-events-auto">
+      <div className="flex items-center justify-end">
         {session ? (
           <div 
-            className="relative" 
+            className="relative pointer-events-auto" 
             onMouseLeave={() => setDropdownOpen(false)}
           >
             {/* We add a padding-bottom to the button so the hover area connects seamlessly to the dropdown below */}
@@ -96,7 +96,7 @@ export function Navigation({ session }: { session: any }) {
             </AnimatePresence>
           </div>
         ) : (
-          <div className="flex gap-10">
+          <div className="flex gap-10 pointer-events-auto">
             <Link href="/login" className="flex items-center gap-2 group">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f4ede0" strokeWidth="2">
                 <path d="M18 6L6 18M6 6l12 12" />
