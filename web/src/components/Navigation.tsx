@@ -15,10 +15,10 @@ export function Navigation({ session }: { session: any }) {
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] as any, delay: 0.2 }}
-      className="fixed top-0 w-full z-[100] px-12 py-8 grid grid-cols-3 items-center pointer-events-auto mix-blend-difference"
+      className="fixed top-0 w-full z-[100] px-12 py-8 grid grid-cols-3 items-center pointer-events-none mix-blend-difference"
     >
       {/* LEFT: Home Button */}
-      <div className="flex items-center justify-start">
+      <div className="flex items-center justify-start pointer-events-auto">
         {pathname !== "/" && (
           <Link href="/" className="flex items-center gap-2 group">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f4ede0" strokeWidth="2">
@@ -33,7 +33,7 @@ export function Navigation({ session }: { session: any }) {
       </div>
 
       {/* CENTER: Logo & Title (Only visible on the home/landing page) */}
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-center pointer-events-auto">
         {pathname === "/" && (
           <Link href="/" className="flex flex-col items-center justify-center group">
 
@@ -50,7 +50,7 @@ export function Navigation({ session }: { session: any }) {
       </div>
 
       {/* RIGHT: Auth & Links */}
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end pointer-events-auto">
         {session ? (
           <div 
             className="relative" 
