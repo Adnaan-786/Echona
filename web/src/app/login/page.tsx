@@ -62,8 +62,8 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* ── Google Sign In ──────────────────────────── */}
-          <div className="w-full mb-6">
+          {/* ── Google Sign In (Hidden for now) ──────────────────────────── */}
+          <div className="hidden w-full mb-6">
             <button
               type="button"
               disabled={isGoogleLoading}
@@ -80,7 +80,7 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="flex items-center w-full mb-6">
+          <div className="hidden flex items-center w-full mb-6">
             <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent to-[#d4af37]/30"></div>
             <span className="px-4 text-[10px] font-cinzel font-bold tracking-widest text-[#d4af37]/60 uppercase">OR</span>
             <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent to-[#d4af37]/30"></div>
