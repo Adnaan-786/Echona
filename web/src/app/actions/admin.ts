@@ -24,6 +24,20 @@ async function checkAdmin() {
   return session
 }
 
+export async function deleteCompetition(competitionId: string) {
+  await checkAdmin()
+  await prisma.competition.delete({ where: { id: competitionId } })
+  redirect("/admin/competitions")
+}
+
+export async function deleteRound(roundId: string) {
+  await checkAdmin()
+  const round = await prisma.round.findUnique({ where: { id: roundId } })
+  if (!round) throw new Error("Round not found")
+  await prisma.round.delete({ where: { id: roundId } })
+  redirect(`/admin/competitions/${round.competitionId}`)
+}
+
 export async function triggerSeedChampionship() {
   await checkAdmin()
   const comp = await seedPirateChampionship()

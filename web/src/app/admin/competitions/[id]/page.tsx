@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { DeleteButton } from "@/components/DeleteButton"
+import { deleteCompetition } from "@/app/actions/admin"
 
 const prisma = new PrismaClient()
 
@@ -31,8 +33,16 @@ export default async function AdminCompetitionDetailPage({
           </Link>
           <h1 className="mt-2 text-4xl font-bold tracking-widest text-[#d4af37]">{comp.name}</h1>
           <p className="mt-2 text-[#8b7355]">{comp.description}</p>
-          <div className="mt-4 inline-block rounded bg-[#2a2a2a] px-3 py-1 font-bold text-[#d4cbb3] border border-[#8b7355]">
-            Status: {comp.status}
+          <div className="flex items-center gap-4 mt-4">
+            <div className="inline-block rounded bg-[#2a2a2a] px-3 py-1 font-bold text-[#d4cbb3] border border-[#8b7355]">
+              Status: {comp.status}
+            </div>
+            <DeleteButton 
+              action={deleteCompetition} 
+              id={comp.id} 
+              label="DELETE COMPETITION" 
+              confirmText="Are you sure you want to permanently delete this competition? This will destroy all rounds, questions, and submissions inside it!" 
+            />
           </div>
         </div>
 

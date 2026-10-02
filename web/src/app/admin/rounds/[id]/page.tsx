@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { DeleteButton } from "@/components/DeleteButton"
+import { deleteRound } from "@/app/actions/admin"
 
 const prisma = new PrismaClient()
 
@@ -33,8 +35,16 @@ export default async function AdminRoundDetailPage({
           </Link>
           <h1 className="mt-2 text-4xl font-bold tracking-widest text-[#d4af37]">Round {round.order}: {round.name}</h1>
           <p className="mt-2 text-[#8b7355]">{round.durationSeconds / 60} mins | Max {round.maxCompileAttempts} compile attempts</p>
-          <div className="mt-4 inline-block rounded bg-[#2a2a2a] px-3 py-1 font-bold text-[#d4cbb3] border border-[#8b7355]">
-            Status: {round.status}
+          <div className="flex items-center gap-4 mt-4">
+            <div className="inline-block rounded bg-[#2a2a2a] px-3 py-1 font-bold text-[#d4cbb3] border border-[#8b7355]">
+              Status: {round.status}
+            </div>
+            <DeleteButton 
+              action={deleteRound} 
+              id={round.id} 
+              label="DELETE ROUND" 
+              confirmText={`Are you sure you want to permanently delete "${round.name}"? This will destroy all questions and submissions inside it!`} 
+            />
           </div>
         </div>
 
