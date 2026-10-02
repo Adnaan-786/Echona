@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<body style="background: red; color: white; margin: 0;">
+  <h1>Frame Test</h1>
+  <img id="img" src="/assets/video-frames/frame_0001.jpg" style="max-width: 100%; border: 5px solid yellow;" />
+  <script>
+    let i = 1;
+    setInterval(() => {
+      i = (i % 120) + 1;
+      const str = i.toString().padStart(4, '0');
+      document.getElementById('img').src = `/assets/video-frames/frame_${str}.jpg`;
+    }, 100);
+  </script>
+</body>
+</html>
