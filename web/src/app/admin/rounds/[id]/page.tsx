@@ -40,14 +40,12 @@ export default async function AdminRoundDetailPage({
 
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-[#d4af37]">Questions</h2>
-          {round.competition.status === "DRAFT" && (
-            <Link
-              href={`/admin/rounds/${round.id}/questions/new`}
-              className="rounded bg-[#8b0000] px-4 py-2 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[#660000]"
-            >
-              + ADD QUESTION
-            </Link>
-          )}
+          <Link
+            href={`/admin/rounds/${round.id}/questions/new`}
+            className="rounded bg-[#8b0000] px-4 py-2 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[#660000]"
+          >
+            + ADD QUESTION
+          </Link>
         </div>
 
         <div className="space-y-4">
@@ -58,14 +56,12 @@ export default async function AdminRoundDetailPage({
             >
               <div className="flex justify-between items-start">
                 <h3 className="text-lg font-bold text-[#d4af37]">{q.title}</h3>
-                {round.competition.status === "DRAFT" && (
-                  <Link 
-                    href={`/admin/rounds/${round.id}/questions/${q.id}/edit`}
-                    className="text-xs text-[#d4af37] hover:text-white border border-[#d4af37]/30 hover:bg-[#d4af37]/20 px-3 py-1 rounded transition-colors"
-                  >
-                    Edit
-                  </Link>
-                )}
+                <Link 
+                  href={`/admin/rounds/${round.id}/questions/${q.id}/edit`}
+                  className="text-xs text-[#d4af37] hover:text-white border border-[#d4af37]/30 hover:bg-[#d4af37]/20 px-3 py-1 rounded transition-colors"
+                >
+                  Edit
+                </Link>
               </div>
               <p className="text-sm text-[#8b7355] line-clamp-2 mt-1">{q.description}</p>
               <div className="mt-4 flex gap-4 text-xs font-semibold text-[#d4cbb3]">
