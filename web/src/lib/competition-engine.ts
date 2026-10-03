@@ -332,6 +332,8 @@ export async function submitSolution(
 
   let passedCount = 0
   let allPassed = true
+  let totalTimeMs = 0
+  let executionLogs = ""
 
   for (const tc of allTestCases) {
     const res = await execService.execute({
@@ -340,23 +342,60 @@ export async function submitSolution(
       input: tc.input,
       expectedOutput: tc.expected
     })
+    totalTimeMs += res.time
     if (res.passed) {
       passedCount++
+      executionLogs += `Test Case passed.\n`
     } else {
       allPassed = false
+      executionLogs += `Test Case failed. Output: ${res.stdout || res.stderr}\n`
     }
   }
+  
+  if (allTestCases.length === 0) {
+    // Execute without inputs to get baseline execution info
+    const res = await execService.execute({ language, code, input: "", expectedOutput: "" })
+    totalTimeMs += res.time
+    executionLogs += res.passed ? `Execution passed: ${res.stdout}\n` : `Execution failed: ${res.stderr || res.stdout}\n`
+  }
 
-  // Calculate proportional score if test cases exist, or full points if all passed
   const totalPoints = question.points || 100
-  const pointsEarned = allTestCases.length > 0
-    ? Math.round((passedCount / allTestCases.length) * totalPoints)
-    : (code.length > 10 ? totalPoints : 0)
+  
+  // Dynamically evaluate score using OpenRouter API
+  const { evaluateCodeScore } = await import("./ai-debugger")
+  const aiEval = await evaluateCodeScore(
+    code,
+    language,
+    question.title,
+    question.description || "",
+    executionLogs,
+    totalPoints,
+    totalTimeMs
+  )
+  
+  const pointsEarned = aiEval.earnedScore
 
   const finalSubmission = await prisma.submission.update({
     where: { id: submission.id },
     data: {
-      status: (allPassed && allTestCases.length > 0) || pointsEarned > 0 ? "ACCEPTED" : "REJECTED"
+      status: pointsEarned >= (totalPoints * 0.8) ? "ACCEPTED" : "REJECTED"
+    }
+  })
+
+  // Create AI Analysis record
+  await prisma.aIAnalysis.upsert({
+    where: { submissionId: submission.id },
+    create: {
+      submissionId: submission.id,
+      correctness: Math.round((pointsEarned / totalPoints) * 100),
+      codeQuality: 80, // rough placeholder
+      bugs: !allPassed ? "Some tests failed" : "None detected",
+      feedback: aiEval.feedback,
+      status: "COMPLETED"
+    },
+    update: {
+      feedback: aiEval.feedback,
+      correctness: Math.round((pointsEarned / totalPoints) * 100)
     }
   })
 

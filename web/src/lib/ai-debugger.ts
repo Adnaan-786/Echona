@@ -383,3 +383,47 @@ export async function runAICompetitionEvaluation(competitionId: string) {
     top3Winners
   }
 }
+
+export async function evaluateCodeScore(
+  code: string,
+  language: string,
+  questionTitle: string,
+  questionDesc: string,
+  executionResult: string,
+  maxPoints: number,
+  executionTimeMs: number
+): Promise<{ earnedScore: number, feedback: string }> {
+  const apiKey = process.env.OPENROUTER_API_KEY
+  if (!apiKey) {
+    return { earnedScore: 0, feedback: "AI evaluation skipped due to missing API key." }
+  }
+
+  const systemPrompt = `You are a strict but fair coding competition evaluator.
+You will evaluate the participant's code, the problem description, and the execution/test results.
+Your goal is to assign an integer score from 0 to ${maxPoints} for this submission, considering:
+1. Did the code pass the test cases? (execution results will tell you).
+2. Code quality and effort. Even if tests failed, if the approach was extremely close or high quality, award partial points (e.g. 10-40% of max).
+3. Efficiency. (Execution time was ${executionTimeMs}ms).
+
+You must respond with valid JSON ONLY. No markdown blocks, no conversational text.
+Schema: { "score": number, "feedback": "Brief 2-3 sentence explanation of the score" }`
+
+  const userPrompt = `Problem: ${questionTitle}\n${questionDesc}\n\nLanguage: ${language}\n\nCode:\n${code}\n\nExecution/Test Results:\n${executionResult}`
+
+  const res = await callOpenRouter(apiKey, systemPrompt, userPrompt)
+  if (!res || !res.result) {
+    return { earnedScore: 0, feedback: "Evaluation failed to return a result." }
+  }
+  
+  try {
+    const rawContent = res.result || "{}"
+    const cleanJson = rawContent.replace(/```json/g, "").replace(/```/g, "").trim()
+    const parsed = JSON.parse(cleanJson)
+    return {
+      earnedScore: Math.min(Math.max(0, Math.round(Number(parsed.score) || 0)), maxPoints),
+      feedback: parsed.feedback || "Evaluated."
+    }
+  } catch (e) {
+    return { earnedScore: 0, feedback: "Failed to parse AI evaluation." }
+  }
+}
