@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 
 export function VideoScrollSequence() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [images, setImages] = useState<HTMLImageElement[]>([]);
+  const imagesRef = useRef<HTMLImageElement[]>([]);
+  const isReadyRef = useRef(false);
   
   const totalFrames = 120;
   
@@ -12,12 +13,13 @@ export function VideoScrollSequence() {
   const currentFrame = useRef(0);
   const lastDrawnFrame = useRef(-1);
   
-  const drawFrame = useCallback((index: number, imgArray: HTMLImageElement[]) => {
+  const drawFrame = useCallback((index: number) => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
     
     const idx = Math.max(0, Math.min(Math.floor(index), totalFrames - 1));
+    const imgArray = imagesRef.current;
     
     if (imgArray[idx]?.complete) {
       ctx.drawImage(imgArray[idx], 0, 0, canvas.width, canvas.height);
@@ -28,7 +30,11 @@ export function VideoScrollSequence() {
   }, []);
 
   useEffect(() => {
+    // Only initialize once
+    if (imagesRef.current.length > 0) return;
+
     const loadedImages: HTMLImageElement[] = new Array(totalFrames);
+    imagesRef.current = loadedImages;
     
     const loadFrame = (index: number): Promise<void> => {
       return new Promise((resolve) => {
@@ -43,7 +49,7 @@ export function VideoScrollSequence() {
         img.onload = () => {
           loadedImages[index] = img;
           if (index === 0 && currentFrame.current === 0) {
-            drawFrame(0, loadedImages);
+            drawFrame(0);
           }
           resolve();
         };
@@ -58,10 +64,9 @@ export function VideoScrollSequence() {
         initialBatch.push(loadFrame(i));
       }
       await Promise.all(initialBatch);
-      setImages([...loadedImages]); // Unlock scroll rendering
+      isReadyRef.current = true;
 
       // 2. Lazy load the remaining frames in small background batches
-      // to prevent the browser from clogging the network with 120 parallel requests
       setTimeout(async () => {
         const batchSize = 10;
         for (let i = 5; i < totalFrames; i += batchSize) {
@@ -70,8 +75,6 @@ export function VideoScrollSequence() {
             batch.push(loadFrame(i + j));
           }
           await Promise.all(batch);
-          // Periodically update the state so the scroll event has access to new frames
-          setImages([...loadedImages]); 
         }
       }, 200);
     };
@@ -80,12 +83,9 @@ export function VideoScrollSequence() {
   }, [drawFrame]);
 
   useEffect(() => {
-    if (images.length === 0) return;
-
     let rafId: number;
 
     const handleScroll = () => {
-      // The scrollable area for the video is the first 400vh
       const scrollPixels = window.scrollY;
       const maxScrollPixels = window.innerHeight * 4;
       
@@ -100,12 +100,17 @@ export function VideoScrollSequence() {
     };
 
     const renderLoop = () => {
+      if (!isReadyRef.current) {
+        rafId = requestAnimationFrame(renderLoop);
+        return;
+      }
+
       currentFrame.current += (targetFrame.current - currentFrame.current) * 0.1;
       
       const currentIdx = Math.max(0, Math.min(Math.floor(currentFrame.current), totalFrames - 1));
       
       if (currentIdx !== lastDrawnFrame.current) {
-        drawFrame(currentFrame.current, images);
+        drawFrame(currentFrame.current);
         lastDrawnFrame.current = currentIdx;
       }
       
@@ -131,7 +136,7 @@ export function VideoScrollSequence() {
       window.removeEventListener("resize", handleScroll);
       cancelAnimationFrame(rafId);
     };
-  }, [images, drawFrame]);
+  }, [drawFrame]);
 
   return (
     <>
@@ -156,8 +161,8 @@ export function VideoScrollSequence() {
 
       {/* HERO TITLE OVERLAY - Fades out dynamically via JS in renderLoop */}
       <div id="hero-title-overlay" className="fixed inset-0 flex flex-col items-center justify-center pointer-events-none z-40 will-change-opacity">
-        <h1 className="font-cinzel font-bold text-6xl md:text-8xl lg:text-[10rem] text-transparent bg-clip-text bg-gradient-to-b from-[#f4ede0] to-[#d4af37] tracking-[0.15em] drop-shadow-[0_0_30px_rgba(212,175,55,0.4)] text-center">
-          ECHONA <span className="text-[#c62828]">2026</span>
+        <h1 className="font-[family-name:var(--font-sancreek)] font-bold text-6xl md:text-8xl lg:text-[10rem] text-metallic-gold tracking-wider drop-shadow-[0_0_30px_rgba(212,175,55,0.6)] text-center pb-4">
+          ECHONA <span className="text-[#c62828] [text-shadow:2px_2px_4px_rgba(0,0,0,0.8)]">2026</span>
         </h1>
         <p className="mt-4 font-garamond italic text-2xl md:text-4xl text-[#d6c7b0] tracking-[0.2em] drop-shadow-lg text-center max-w-3xl px-4">
           The Brethren Court of Competitive Programming

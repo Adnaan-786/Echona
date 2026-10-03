@@ -37,8 +37,8 @@ export function LoadingIntro() {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#1a1714] overflow-hidden transition-all duration-[1500ms] ease-in-out transform-gpu will-change-[transform,opacity] ${
-        isFadingOut ? "opacity-0 pointer-events-none scale-105" : "opacity-100 scale-100"
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#1a1714] transition-opacity duration-[1500ms] ease-in-out transform-gpu will-change-opacity ${
+        isFadingOut ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
       <video

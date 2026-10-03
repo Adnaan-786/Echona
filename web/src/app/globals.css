@@ -862,6 +862,22 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+.text-metallic-gold {
+  background: linear-gradient(
+    to bottom,
+    #a67c00 0%,
+    #bf953f 20%,
+    #fcf6ba 40%,
+    #b38728 60%,
+    #fdffe1 80%,
+    #7a5901 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
 .border-gold { border-color: rgba(212, 175, 55, 0.35) !important; }
 .border-rope { border-color: rgba(139, 115, 85, 0.4) !important; }
 
