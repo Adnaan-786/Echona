@@ -139,14 +139,15 @@ export function VideoScrollSequence() {
       <div className="fixed inset-0 w-full h-full -z-50 bg-[#1a1714]">
         <canvas 
           ref={canvasRef} 
-          width={3840} 
-          height={2160}
-          className="absolute inset-0 w-full h-full opacity-100"
+          width={1920} 
+          height={1080}
+          className="absolute inset-0 w-full h-full opacity-100 transform-gpu"
           style={{ 
             objectFit: 'cover',
             backgroundImage: "url('/assets/video-frames/frame_0001.webp')",
             backgroundSize: 'cover',
-            backgroundPosition: 'center'
+            backgroundPosition: 'center',
+            willChange: 'contents'
           }}
         />
         {/* Subtle vignette/fade over the map to make text readable */}
@@ -154,9 +155,9 @@ export function VideoScrollSequence() {
       </div>
 
       {/* HERO TITLE OVERLAY - Fades out dynamically via JS in renderLoop */}
-      <div id="hero-title-overlay" className="fixed inset-0 flex flex-col items-center justify-center pointer-events-none z-40 transition-opacity duration-100">
+      <div id="hero-title-overlay" className="fixed inset-0 flex flex-col items-center justify-center pointer-events-none z-40 will-change-opacity">
         <h1 className="font-cinzel font-bold text-6xl md:text-8xl lg:text-[10rem] text-transparent bg-clip-text bg-gradient-to-b from-[#f4ede0] to-[#d4af37] tracking-[0.15em] drop-shadow-[0_0_30px_rgba(212,175,55,0.4)] text-center">
-          ECHONA <span className="text-[#c62828]">2K26</span>
+          ECHONA <span className="text-[#c62828]">2026</span>
         </h1>
         <p className="mt-4 font-garamond italic text-2xl md:text-4xl text-[#d6c7b0] tracking-[0.2em] drop-shadow-lg text-center max-w-3xl px-4">
           The Brethren Court of Competitive Programming
