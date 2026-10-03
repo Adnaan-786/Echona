@@ -161,9 +161,11 @@ export function VideoScrollSequence() {
 
       {/* HERO TITLE OVERLAY - Fades out dynamically via JS in renderLoop */}
       <div id="hero-title-overlay" className="fixed inset-0 flex flex-col items-center justify-center pointer-events-none z-40 will-change-opacity">
-        <h1 className="font-[family-name:var(--font-sancreek)] font-bold text-6xl md:text-8xl lg:text-[10rem] text-metallic-gold tracking-wider drop-shadow-[0_0_30px_rgba(212,175,55,0.6)] text-center pb-4">
-          ECHONA <span className="text-[#c62828] [text-shadow:2px_2px_4px_rgba(0,0,0,0.8)]">2026</span>
-        </h1>
+        <img 
+          src="/echona-logo.png" 
+          alt="ECHONA" 
+          className="w-[90vw] max-w-[800px] h-auto object-contain drop-shadow-[0_0_40px_rgba(212,175,55,0.5)] mb-6"
+        />
         <p className="mt-4 font-garamond italic text-2xl md:text-4xl text-[#d6c7b0] tracking-[0.2em] drop-shadow-lg text-center max-w-3xl px-4">
           The Brethren Court of Competitive Programming
         </p>
