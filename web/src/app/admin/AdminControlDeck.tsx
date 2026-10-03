@@ -313,44 +313,21 @@ export function AdminControlDeck({ initialData }: AdminDeckProps) {
                 Jump To Specific Round:
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
-                <button
-                  onClick={() => handleActivateRound(1)}
-                  disabled={loadingAction === "ROUND_1"}
-                  className={`rounded-lg border p-3 text-left transition-all ${
-                    activeRound?.order === 1
-                      ? "border-[#ffd700] bg-[#ffd700]/10 text-[#d4af37]"
-                      : "border-[#8b7355]/40 bg-transparent border-b border-[#d4af37]/20 text-[#f4ede0]/70 hover:border-[#ffd700]"
-                  }`}
-                >
-                  <div className="font-bold text-sm">ROUND 1: Quest for Lost Treasure</div>
-                  <div className="text-xs text-[#64748b] mt-1">3 Questions | 25 min | 5 attempts</div>
-                </button>
-
-                <button
-                  onClick={() => handleActivateRound(2)}
-                  disabled={loadingAction === "ROUND_2"}
-                  className={`rounded-lg border p-3 text-left transition-all ${
-                    activeRound?.order === 2
-                      ? "border-[#ffd700] bg-[#ffd700]/10 text-[#d4af37]"
-                      : "border-[#8b7355]/40 bg-transparent border-b border-[#d4af37]/20 text-[#f4ede0]/70 hover:border-[#ffd700]"
-                  }`}
-                >
-                  <div className="font-bold text-sm">ROUND 2: The Kraken's Trial</div>
-                  <div className="text-xs text-[#64748b] mt-1">2 Questions | 20 min | 3 attempts</div>
-                </button>
-
-                <button
-                  onClick={() => handleActivateRound(3)}
-                  disabled={loadingAction === "ROUND_3"}
-                  className={`rounded-lg border p-3 text-left transition-all ${
-                    activeRound?.order === 3
-                      ? "border-[#ffd700] bg-[#ffd700]/10 text-[#d4af37]"
-                      : "border-[#8b7355]/40 bg-transparent border-b border-[#d4af37]/20 text-[#f4ede0]/70 hover:border-[#ffd700]"
-                  }`}
-                >
-                  <div className="font-bold text-sm">ROUND 3: Clash of Captains</div>
-                  <div className="text-xs text-[#64748b] mt-1">1 Question | 15 min | 2 attempts</div>
-                </button>
+                {comp?.rounds?.map((r: any) => (
+                  <button
+                    key={r.id}
+                    onClick={() => handleActivateRound(r.order)}
+                    disabled={loadingAction === `ROUND_${r.order}`}
+                    className={`rounded-lg border p-3 text-left transition-all ${
+                      activeRound?.order === r.order
+                        ? "border-[#ffd700] bg-[#ffd700]/10 text-[#d4af37]"
+                        : "border-[#8b7355]/40 bg-transparent border-b border-[#d4af37]/20 text-[#f4ede0]/70 hover:border-[#ffd700]"
+                    }`}
+                  >
+                    <div className="font-bold text-sm">ROUND {r.order}: {r.name}</div>
+                    <div className="text-xs text-[#64748b] mt-1">{r.questions?.length || 0} Questions | {r.durationSeconds / 60} min | {r.maxCompileAttempts} attempts</div>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
