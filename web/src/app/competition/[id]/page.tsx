@@ -156,18 +156,23 @@ export default function CompetitionArenaPage({ params }: { params: Promise<{ id:
     }
     setIsCompiling(true)
     setOutput("⚔️ Hoisting sails — compiling in the Captain's workshop...\n")
-    const res = await compileCode(currentQuestion.id, language, currentCode)
-    setIsCompiling(false)
-    if (res.success && res.attempt) {
-      setAttempts((prev) => ({ ...prev, [currentQuestion.id]: res.attempt.attemptNumber }))
-      setOutput(`[COMPILE ATTEMPT ${res.attempt.attemptNumber}/${res.attempt.maxAttempts}]\n\n${res.attempt.result}`)
-    } else {
-      setOutput(`[ERROR]\n${res.error}`)
-      if (res.autoSubmitted) {
-        setAttempts((prev) => ({ ...prev, [currentQuestion.id]: maxAttempts }))
-        setSubmissions((prev) => ({ ...prev, [currentQuestion.id]: "AUTO_SUBMITTED" }))
-        setAttemptErrorModal(res.error)
+    try {
+      const res = await compileCode(currentQuestion.id, language, currentCode)
+      setIsCompiling(false)
+      if (res.success && res.attempt) {
+        setAttempts((prev) => ({ ...prev, [currentQuestion.id]: res.attempt.attemptNumber }))
+        setOutput(`[COMPILE ATTEMPT ${res.attempt.attemptNumber}/${res.attempt.maxAttempts}]\n\n${res.attempt.result}`)
+      } else {
+        setOutput(`[ERROR]\n${res.error}`)
+        if (res.autoSubmitted) {
+          setAttempts((prev) => ({ ...prev, [currentQuestion.id]: maxAttempts }))
+          setSubmissions((prev) => ({ ...prev, [currentQuestion.id]: "AUTO_SUBMITTED" }))
+          setAttemptErrorModal(res.error)
+        }
       }
+    } catch (err: any) {
+      setIsCompiling(false)
+      setOutput(`❌ NETWORK ERROR: Failed to run code. Please try again.\nDetails: ${err.message}`)
     }
   }
 
@@ -175,13 +180,18 @@ export default function CompetitionArenaPage({ params }: { params: Promise<{ id:
     if (!currentQuestion) return
     setIsSubmitting(true)
     setOutput("📜 Sealing your parchment — dispatching to the High Admiral's AI...\n")
-    const res = await submitFinalCode(currentQuestion.id, language, currentCode)
-    setIsSubmitting(false)
-    if (res.success && res.submission) {
-      setSubmissions((prev) => ({ ...prev, [currentQuestion.id]: res.submission.status }))
-      setOutput(`✅ SUBMISSION RECORDED!\nStatus: ${res.submission.status}\nYour scroll has been received by the Admiral.`)
-    } else {
-      setOutput(`❌ SUBMISSION FAILED: ${res.error}`)
+    try {
+      const res = await submitFinalCode(currentQuestion.id, language, currentCode)
+      setIsSubmitting(false)
+      if (res.success && res.submission) {
+        setSubmissions((prev) => ({ ...prev, [currentQuestion.id]: res.submission.status }))
+        setOutput(`✅ SUBMISSION RECORDED!\nStatus: ${res.submission.status}\nYour scroll has been received by the Admiral.`)
+      } else {
+        setOutput(`❌ SUBMISSION FAILED: ${res.error}`)
+      }
+    } catch (err: any) {
+      setIsSubmitting(false)
+      setOutput(`❌ NETWORK ERROR: Failed to reach the server. Please try again.\nDetails: ${err.message}`)
     }
   }
 

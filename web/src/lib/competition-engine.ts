@@ -446,10 +446,7 @@ export async function submitSolution(
     data: { score: totalAccumulatedScore }
   })
 
-  // Trigger AI Analysis in background
-  analyzeSubmission(finalSubmission.id).catch(err => {
-    console.error(`AI analysis for submission ${finalSubmission.id} failed:`, err)
-  })
+  // AI Analysis is already handled synchronously above via evaluateCodeScore.
 
   // Broadcast submission and leaderboard update
   await broadcastEvent(round.competitionId, "submission_created", {
