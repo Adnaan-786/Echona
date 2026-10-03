@@ -120,6 +120,7 @@ export function AdminControlDeck({ initialData }: AdminDeckProps) {
     setLoadingAction("START")
     try {
       await startTestAdmin(competitionId)
+      window.location.reload()
     } catch (e: any) {
       alert(e.message)
     } finally {
@@ -133,6 +134,7 @@ export function AdminControlDeck({ initialData }: AdminDeckProps) {
     setLoadingAction(`ROUND_${roundOrder}`)
     try {
       await activateRoundAdmin(competitionId, roundOrder)
+      window.location.reload()
     } catch (e: any) {
       alert(e.message)
     } finally {
