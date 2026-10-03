@@ -82,16 +82,11 @@ async function callOpenRouter(
       }
 
       // Strip markdown code fences if the model wraps its JSON in them
-      const cleaned = rawContent.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim()
-      const parsed = JSON.parse(cleaned)
-
-      if (typeof parsed.correctness !== "number" || typeof parsed.bugs !== "string") {
-        console.warn(`[AI Debugger] ${model} returned malformed JSON, trying next...`)
-        continue
-      }
-
+      let cleaned = rawContent.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim()
+      
+      // Just return the raw text, the caller handles JSON parsing based on their own schema
       console.log(`[AI Debugger] ✅ Routed via: ${actualModel}`)
-      return { model: actualModel, result: parsed }
+      return { model: actualModel, result: cleaned }
     } catch (err: any) {
       console.warn(`[AI Debugger] ${model} failed: ${err.message}`)
       continue
@@ -212,7 +207,13 @@ Evaluate now and return strictly valid JSON matching the specified schema.
       return analyzeCodeLocally(code, language, questionTitle, questionDesc, executionPassed)
     }
 
-    const parsed = winner.result
+    let parsed: any = {}
+    try {
+      parsed = JSON.parse(winner.result)
+    } catch (e) {
+      console.warn("[AI Debugger] Failed to parse JSON from", winner.model)
+    }
+    
     return {
       correctness: Number(parsed.correctness) || 70,
       codeQuality: Number(parsed.codeQuality) || 70,
