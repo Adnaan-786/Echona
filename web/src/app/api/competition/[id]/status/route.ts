@@ -167,11 +167,41 @@ export async function POST(
       data: { status }
     })
     
-    // Also reset the rounds if restarting
+    // Also reset the rounds and clear all participant data if restarting
     if (status === "ACTIVE") {
        await prisma.round.updateMany({
          where: { competitionId },
          data: { status: "ACTIVE" }
+       })
+
+       // Fetch all question IDs in this competition to clear related user data
+       const rounds = await prisma.round.findMany({
+         where: { competitionId },
+         select: { id: true, questions: { select: { id: true } } }
+       })
+       
+       const questionIds = rounds.flatMap(r => r.questions.map(q => q.id))
+
+       if (questionIds.length > 0) {
+         // Wipe compile attempts so they get 5/5 again
+         await prisma.compileAttempt.deleteMany({
+           where: { questionId: { in: questionIds } }
+         })
+         
+         // Wipe submissions (and their cascading scores/AI analyses)
+         await prisma.submission.deleteMany({
+           where: { questionId: { in: questionIds } }
+         })
+
+         // Wipe drafts
+         await prisma.draftCode.deleteMany({
+           where: { questionId: { in: questionIds } }
+         })
+       }
+
+       // Wipe overall competition participant scores
+       await prisma.competitionParticipant.deleteMany({
+         where: { competitionId }
        })
     }
     

@@ -63,6 +63,21 @@ export async function seedPirateChampionship() {
       where: { id: competition.id },
       data: { status: "WAITING" }
     })
+
+    // Wipe all previous participant attempts so they get a fresh start
+    const rounds = await prisma.round.findMany({
+      where: { competitionId: competition.id },
+      select: { id: true, questions: { select: { id: true } } }
+    })
+    
+    const questionIds = rounds.flatMap(r => r.questions.map(q => q.id))
+
+    if (questionIds.length > 0) {
+      await prisma.compileAttempt.deleteMany({ where: { questionId: { in: questionIds } } })
+      await prisma.submission.deleteMany({ where: { questionId: { in: questionIds } } })
+      await prisma.draftCode.deleteMany({ where: { questionId: { in: questionIds } } })
+    }
+    await prisma.competitionParticipant.deleteMany({ where: { competitionId: competition.id } })
   }
 
   // Ensure user is participant
