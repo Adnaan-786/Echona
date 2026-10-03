@@ -185,7 +185,16 @@ export default function CompetitionArenaPage({ params }: { params: Promise<{ id:
       setIsSubmitting(false)
       if (res.success && res.submission) {
         setSubmissions((prev) => ({ ...prev, [currentQuestion.id]: res.submission.status }))
-        setOutput(`✅ SUBMISSION RECORDED!\nStatus: ${res.submission.status}\nYour scroll has been received by the Admiral.`)
+        setOutput(`✅ SUBMISSION RECORDED!\nStatus: ${res.submission.status}\nYour scroll has been received by the Admiral.\n\n(AI is analyzing your code in the background for effort and logic points)`)
+        
+        // Fire background AI analysis asynchronously (fire and forget)
+        fetch('/api/submissions/evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ submissionId: res.submission.id }),
+          keepalive: true // ensures the request completes even if the user navigates away
+        }).catch(() => {})
+        
       } else {
         setOutput(`❌ SUBMISSION FAILED: ${res.error}`)
       }

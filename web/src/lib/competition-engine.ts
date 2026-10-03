@@ -361,41 +361,32 @@ export async function submitSolution(
 
   const totalPoints = question.points || 100
   
-  // Dynamically evaluate score using OpenRouter API
-  const { evaluateCodeScore } = await import("./ai-debugger")
-  const aiEval = await evaluateCodeScore(
-    code,
-    language,
-    question.title,
-    question.description || "",
-    executionLogs,
-    totalPoints,
-    totalTimeMs
-  )
-  
-  const pointsEarned = aiEval.earnedScore
+  // Baseline points based purely on execution
+  const pointsEarned = allTestCases.length > 0
+    ? Math.round((passedCount / allTestCases.length) * totalPoints)
+    : (code.length > 10 ? totalPoints : 0)
 
   const finalSubmission = await prisma.submission.update({
     where: { id: submission.id },
     data: {
-      status: pointsEarned >= (totalPoints * 0.8) ? "ACCEPTED" : "REJECTED"
+      status: "ACCEPTED" // Instantly show accepted as requested
     }
   })
 
-  // Create AI Analysis record
+  // Create PENDING AI Analysis record
   await prisma.aIAnalysis.upsert({
     where: { submissionId: submission.id },
     create: {
       submissionId: submission.id,
       correctness: Math.round((pointsEarned / totalPoints) * 100),
-      codeQuality: 80, // rough placeholder
+      codeQuality: 0,
       bugs: !allPassed ? "Some tests failed" : "None detected",
-      feedback: aiEval.feedback,
-      status: "COMPLETED"
+      feedback: "AI Evaluation Pending...",
+      status: "PENDING"
     },
     update: {
-      feedback: aiEval.feedback,
-      correctness: Math.round((pointsEarned / totalPoints) * 100)
+      feedback: "AI Evaluation Pending...",
+      status: "PENDING"
     }
   })
 
