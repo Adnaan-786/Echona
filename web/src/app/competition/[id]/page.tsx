@@ -45,6 +45,13 @@ export default function CompetitionArenaPage({ params }: { params: Promise<{ id:
   const [attemptErrorModal, setAttemptErrorModal] = useState<string | null>(null)
   const [top3Winners, setTop3Winners] = useState<any[]>([])
 
+  // ── FULLSCREEN ENFORCEMENT ─────────────────────────────────────
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [needsFullscreen, setNeedsFullscreen] = useState(false)
+  const [fullscreenExitWarning, setFullscreenExitWarning] = useState(false)
+  const [autoSubmitDone, setAutoSubmitDone] = useState(false)
+  const [fullscreenExited, setFullscreenExited] = useState(false) // permanent lock once exited
+
   const fetchStatus = async () => {
     try {
       const res = await fetch(`/api/competition/${competitionId}/status`)
@@ -84,6 +91,68 @@ export default function CompetitionArenaPage({ params }: { params: Promise<{ id:
 
   useEffect(() => { fetchStatus() }, [competitionId])
 
+  // ── FULLSCREEN HELPERS ─────────────────────────────────────────
+  const enterFullscreen = () => {
+    const el = document.documentElement
+    if (el.requestFullscreen) el.requestFullscreen()
+    else if ((el as any).webkitRequestFullscreen) (el as any).webkitRequestFullscreen()
+    else if ((el as any).mozRequestFullScreen) (el as any).mozRequestFullScreen()
+    else if ((el as any).msRequestFullscreen) (el as any).msRequestFullscreen()
+  }
+
+  const handleFullscreenAutoSubmit = async (currentQ: QuestionData | undefined, currentCodeVal: string, lang: string) => {
+    if (!currentQ) return
+    setFullscreenExitWarning(true)
+    setAutoSubmitDone(false)
+    setIsSubmitting(true)
+    try {
+      await submitFinalCode(currentQ.id, lang, currentCodeVal)
+      setSubmissions((prev) => ({ ...prev, [currentQ.id]: "AUTO_SUBMITTED" }))
+      setAutoSubmitDone(true)
+    } catch {
+      // silently fail — code still saved as draft
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Track fullscreen state changes
+  useEffect(() => {
+    const onFsChange = () => {
+      const inFs = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      )
+      setIsFullscreen(inFs)
+    }
+    document.addEventListener("fullscreenchange", onFsChange)
+    document.addEventListener("webkitfullscreenchange", onFsChange)
+    document.addEventListener("mozfullscreenchange", onFsChange)
+    document.addEventListener("MSFullscreenChange", onFsChange)
+    return () => {
+      document.removeEventListener("fullscreenchange", onFsChange)
+      document.removeEventListener("webkitfullscreenchange", onFsChange)
+      document.removeEventListener("mozfullscreenchange", onFsChange)
+      document.removeEventListener("MSFullscreenChange", onFsChange)
+    }
+  }, [])
+
+  // When ACTIVE + fullscreen exits → auto-submit + PERMANENT LOCK
+  useEffect(() => {
+    if (arenaState !== "ACTIVE") return
+    if (!needsFullscreen) return
+    if (!isFullscreen) {
+      // Fullscreen was exited — auto-submit and permanently lock the participant
+      setFullscreenExited(true)
+      const currentQ = round?.questions[selectedQuestionIndex]
+      const currentCodeVal = currentQ ? (codes[currentQ.id] || "") : ""
+      handleFullscreenAutoSubmit(currentQ, currentCodeVal, language)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFullscreen])
+
   useEffect(() => {
     if (!socket) return
     socket.on("test_starting", (data: any) => {
@@ -94,6 +163,10 @@ export default function CompetitionArenaPage({ params }: { params: Promise<{ id:
     socket.on("round_started", (data: any) => {
       setSplashRoundName(data.roundName)
       setArenaState("SPLASH")
+      setNeedsFullscreen(true)   // ← trigger fullscreen requirement
+      setIsFullscreen(false)     // reset so overlay shows
+      setFullscreenExitWarning(false)
+      setAutoSubmitDone(false)
       setTimeout(() => {
         setRound({ id: data.roundId, name: data.roundName, order: data.roundOrder, maxCompileAttempts: data.maxCompileAttempts, questions: data.questions })
         const initialCodes: Record<string, string> = {}
@@ -479,6 +552,162 @@ export default function CompetitionArenaPage({ params }: { params: Promise<{ id:
   // ── STATE: ACTIVE CODING ARENA (Codédex-inspired Pirate Layout) ──
   return (
     <div className="flex h-screen w-full flex-col font-sans relative z-10 pt-[120px] pb-4 px-4 gap-4 text-[#f4ede0]">
+
+      {/* ── FULLSCREEN OVERLAY ───────────────────────────────────── */}
+      {needsFullscreen && (!isFullscreen || fullscreenExited) && (
+        <div
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center text-center"
+          style={{
+            background: fullscreenExited
+              ? "linear-gradient(135deg, #0f0505 0%, #0a0000 60%, #0f0500 100%)"
+              : "linear-gradient(135deg, #0a0f1d 0%, #050810 60%, #0f0a00 100%)",
+            backdropFilter: "blur(20px)",
+          }}
+        >
+          {/* Ambient orb */}
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full"
+            style={{
+              background: fullscreenExited
+                ? "radial-gradient(circle, rgba(239,68,68,0.12) 0%, transparent 70%)"
+                : "radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 70%)",
+              animation: "orbPulse 3s ease-in-out infinite",
+            }}
+          />
+
+          <div className="relative z-10 flex flex-col items-center gap-6 px-6 max-w-lg">
+
+            {fullscreenExited ? (
+              /* ── PERMANENT LOCKOUT SCREEN ── */
+              <>
+                <div
+                  className="flex h-28 w-28 items-center justify-center rounded-3xl text-6xl"
+                  style={{
+                    background: "linear-gradient(135deg, #1a0000, #0f0000)",
+                    border: "2px solid rgba(239,68,68,0.6)",
+                    boxShadow: "0 0 60px rgba(239,68,68,0.25), 0 0 120px rgba(239,68,68,0.08)",
+                    animation: "float 3s ease-in-out infinite",
+                  }}
+                >
+                  ☠️
+                </div>
+
+                <div
+                  className="text-[10px] font-cinzel font-bold uppercase tracking-[0.35em] px-4 py-1.5 rounded-full"
+                  style={{
+                    color: "#ef4444",
+                    border: "1px solid rgba(239,68,68,0.5)",
+                    background: "rgba(239,68,68,0.08)",
+                    animation: "urgentPulse 1.5s ease-in-out infinite",
+                  }}
+                >
+                  🚨 DISQUALIFIED FROM THIS ROUND
+                </div>
+
+                <h1
+                  className="text-4xl sm:text-5xl font-black tracking-tight"
+                  style={{
+                    color: "#fdf6e2",
+                    textShadow: "0 4px 30px rgba(0,0,0,0.9), 0 0 60px rgba(239,68,68,0.2)",
+                  }}
+                >
+                  MAROONED!
+                </h1>
+
+                <p className="text-sm font-garamond leading-relaxed" style={{ color: "#64748b" }}>
+                  You exited fullscreen during an active battle. Your current answer has been{" "}
+                  <strong style={{ color: "#ef4444" }}>automatically submitted</strong>. You cannot
+                  attempt any more questions in this round.
+                </p>
+
+                {/* Status card */}
+                <div
+                  className="w-full rounded-2xl p-5 text-center"
+                  style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.35)" }}
+                >
+                  <div className="text-2xl mb-2">⚓</div>
+                  <p className="text-sm font-cinzel font-bold text-red-400 tracking-wider">
+                    {autoSubmitDone ? "SUBMISSION RECORDED" : "SUBMITTING YOUR CODE..."}
+                  </p>
+                  <p className="text-xs font-garamond mt-2 leading-relaxed" style={{ color: "#94a3b8" }}>
+                    {autoSubmitDone
+                      ? "Your code has been sealed and sent to the Admiral. Wait for the round to end."
+                      : "Dispatching your scroll to the Admiral's ship..."}
+                  </p>
+                </div>
+
+                <p className="text-[10px] font-garamond" style={{ color: "#334155" }}>
+                  The round continues for other pirates. Results will be shown when the Admiral ends the session.
+                </p>
+              </>
+            ) : (
+              /* ── INITIAL FULLSCREEN REQUEST ── */
+              <>
+                <div
+                  className="flex h-28 w-28 items-center justify-center rounded-3xl text-6xl"
+                  style={{
+                    background: "linear-gradient(135deg, #1e293b, #0a0f1d)",
+                    border: "2px solid rgba(212,175,55,0.6)",
+                    boxShadow: "0 0 60px rgba(212,175,55,0.25), 0 0 120px rgba(212,175,55,0.08)",
+                    animation: "float 3s ease-in-out infinite",
+                  }}
+                >
+                  🏴‍☠️
+                </div>
+
+                <div
+                  className="text-[10px] font-cinzel font-bold uppercase tracking-[0.35em] px-4 py-1.5 rounded-full"
+                  style={{
+                    color: "#d4af37",
+                    border: "1px solid rgba(212,175,55,0.4)",
+                    background: "rgba(212,175,55,0.08)",
+                    animation: "urgentPulse 1.5s ease-in-out infinite",
+                  }}
+                >
+                  ⚔️ BATTLE STATIONS — ACTION REQUIRED
+                </div>
+
+                <h1
+                  className="text-4xl sm:text-5xl font-black tracking-tight"
+                  style={{
+                    color: "#fdf6e2",
+                    textShadow: "0 4px 30px rgba(0,0,0,0.9), 0 0 60px rgba(212,175,55,0.15)",
+                  }}
+                >
+                  ENTER FULLSCREEN
+                </h1>
+
+                <p className="text-sm font-garamond leading-relaxed" style={{ color: "#64748b" }}>
+                  The Captain has started the round! You must enter{" "}
+                  <strong style={{ color: "#d4af37" }}>fullscreen mode</strong> to access the coding
+                  arena. Exiting fullscreen at any point will{" "}
+                  <strong style={{ color: "#ef4444" }}>permanently lock you out</strong> and
+                  auto-submit your current answer.
+                </p>
+
+                <button
+                  onClick={enterFullscreen}
+                  className="w-full rounded-xl py-4 font-cinzel font-black text-sm tracking-[0.25em] uppercase transition-all"
+                  style={{
+                    background: "linear-gradient(135deg, #d4af37, #b8962e)",
+                    color: "#0a0f1d",
+                    boxShadow: "0 0 30px rgba(212,175,55,0.5), 0 4px 20px rgba(0,0,0,0.4)",
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 50px rgba(212,175,55,0.7), 0 4px 20px rgba(0,0,0,0.4)" }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 30px rgba(212,175,55,0.5), 0 4px 20px rgba(0,0,0,0.4)" }}
+                >
+                  ⛵ HOIST THE SAILS — ENTER FULLSCREEN
+                </button>
+
+                <p className="text-[10px] font-garamond" style={{ color: "#334155" }}>
+                  Press F11 or click the button above · Exiting fullscreen = permanent lockout
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       
       {/* ── MAIN IDE WORKSPACE ────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden w-full max-w-[1800px] mx-auto gap-4">
